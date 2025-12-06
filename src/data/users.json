@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1",
+    "name": "Admin User",
+    "email": "admin@ruthless.com",
+    "password": "password123",
+    "image": null,
+    "planType": "PRO"
+  },
+  {
+    "id": "1765006869943",
+    "name": "Test User 2",
+    "email": "test2@test.com",
+    "password": "password",
+    "image": null,
+    "planType": "FREE"
+  }
+]
