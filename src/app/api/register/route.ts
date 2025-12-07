@@ -11,44 +11,27 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
         }
 
-        const filePath = path.join(process.cwd(), 'src', 'data', 'users.json');
-
-        // Ensure directory exists
-        const dirPath = path.dirname(filePath);
-        if (!fs.existsSync(dirPath)) {
-            fs.mkdirSync(dirPath, { recursive: true });
-        }
-
-        // Read existing users
-        let users = [];
-        if (fs.existsSync(filePath)) {
-            const fileContents = fs.readFileSync(filePath, 'utf8');
-            try {
-                users = JSON.parse(fileContents);
-            } catch (e) {
-                users = [];
-            }
-        }
+        const { prisma } = await import("@/lib/prisma");
 
         // Check availability
-        if (users.find((u: any) => u.email === email)) {
+        const existingUser = await prisma.user.findUnique({
+            where: { email }
+        });
+
+        if (existingUser) {
             return NextResponse.json({ message: "User already exists" }, { status: 409 });
         }
 
         // Create new user
-        const newUser = {
-            id: Date.now().toString(),
-            name,
-            email,
-            password, // Storing plain text for this demo/file-db only
-            image: null,
-            planType: "FREE"
-        };
-
-        users.push(newUser);
-
-        // Save
-        fs.writeFileSync(filePath, JSON.stringify(users, null, 2));
+        const newUser = await prisma.user.create({
+            data: {
+                name,
+                email,
+                password, // Storing plain text to match existing auth logic
+                planType: "FREE",
+                resumesGeneratedCount: 0
+            }
+        });
 
         return NextResponse.json({ message: "User registered successfully", user: newUser }, { status: 201 });
     } catch (error) {

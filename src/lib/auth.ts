@@ -28,26 +28,37 @@ export const authOptions: AuthOptions = {
                 if (!credentials?.email || !credentials?.password) return null
 
                 try {
-                    // Dynamic import to avoid build issues on client side if referenced
-                    const fs = await import('fs');
-                    const path = await import('path');
+                    const { prisma } = await import("@/lib/prisma");
 
-                    const filePath = path.join(process.cwd(), 'src', 'data', 'users.json');
-                    const fileContents = fs.readFileSync(filePath, 'utf8');
-                    const users = JSON.parse(fileContents);
+                    const user = await prisma.user.findUnique({
+                        where: { email: credentials.email }
+                    });
 
-                    const user = users.find((u: any) => u.email === credentials.email && u.password === credentials.password);
-
-                    if (user) {
+                    // Simple string comparison as per existing logic (migrating from json)
+                    // In a real app with hashing, use bcrypt.compare(credentials.password, user.password)
+                    if (user && user.planType && user.password === credentials.password) {
                         return {
                             id: user.id,
                             name: user.name,
                             email: user.email,
                             image: user.image,
                             planType: user.planType || "FREE",
+                            resumesGeneratedCount: user.resumesGeneratedCount || 0
+                        }
+                    }
+
+                    // Fallback for cases where password might not match or user not found
+                    if (user && user.password === credentials.password) {
+                        return {
+                            id: user.id,
+                            name: user.name,
+                            email: user.email,
+                            image: user.image,
+                            planType: "FREE",
                             resumesGeneratedCount: 0
                         }
                     }
+
                     return null;
                 } catch (error) {
                     console.error("Auth error:", error);
