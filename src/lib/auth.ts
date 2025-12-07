@@ -28,15 +28,21 @@ export const authOptions: AuthOptions = {
                 if (!credentials?.email || !credentials?.password) return null
 
                 try {
+                    console.log("Authorize called with:", { email: credentials?.email, password: credentials?.password });
                     const { prisma } = await import("@/lib/prisma");
 
                     const user = await prisma.user.findUnique({
                         where: { email: credentials.email }
                     });
 
+                    console.log("User found in DB:", user);
+
                     // Simple string comparison as per existing logic (migrating from json)
-                    // In a real app with hashing, use bcrypt.compare(credentials.password, user.password)
-                    if (user && user.planType && user.password === credentials.password) {
+                    const passwordMatch = user?.password === credentials.password;
+                    console.log("Password match:", passwordMatch);
+
+                    if (user && user.planType && passwordMatch) {
+                        console.log("Login successful, returning user.");
                         return {
                             id: user.id,
                             name: user.name,
@@ -48,7 +54,8 @@ export const authOptions: AuthOptions = {
                     }
 
                     // Fallback for cases where password might not match or user not found
-                    if (user && user.password === credentials.password) {
+                    if (user && passwordMatch) {
+                        console.log("Login successful (fallback), returning user.");
                         return {
                             id: user.id,
                             name: user.name,
@@ -59,6 +66,7 @@ export const authOptions: AuthOptions = {
                         }
                     }
 
+                    console.log("Login failed: Invalid credentials or missing planType.");
                     return null;
                 } catch (error) {
                     console.error("Auth error:", error);
