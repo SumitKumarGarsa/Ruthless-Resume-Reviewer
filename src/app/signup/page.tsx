@@ -29,7 +29,7 @@ export default function SignupPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                alert(data.message || "Registration failed");
+                alert(data.error ? `Error: ${data.error}` : (data.message || "Registration failed"));
                 setIsLoading(false);
                 return;
             }
